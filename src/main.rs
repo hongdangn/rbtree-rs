@@ -612,13 +612,6 @@ impl<K: Ord, V> RedBlackTree<K, V> {
         self.len = 0;
     }
 
-    /// Empties the `RedBlackTree` without freeing objects in it.
-    #[inline]
-    fn fast_clear(&mut self) {
-        self.root = NodePtr::null();
-        self.len = 0;
-    }
-
     #[inline]
     pub fn del_node(&mut self, k: &K) -> Option<V> {
         let node = self.find_node(k);
