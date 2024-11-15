@@ -108,14 +108,7 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         unsafe { (*self.0).color == Color::Black }
     }
-    #[inline]
-    fn is_left_child(&self) -> bool {
-        self.parent().left() == *self
-    }
-    #[inline]
-    fn is_right_child(&self) -> bool {
-        self.parent().right() == *self
-    }
+
     #[inline]
     fn min_node(self) -> NodePtr<K, V> {
         let mut temp = self.clone();
@@ -124,48 +117,7 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         return temp;
     }
-    #[inline]
-    fn max_node(self) -> NodePtr<K, V> {
-        let mut temp = self.clone();
-        while !temp.right().is_null() {
-            temp = temp.right();
-        }
-        return temp;
-    }
-    #[inline]
-    fn next(self) -> NodePtr<K, V> {
-        if !self.right().is_null() {
-            self.right().min_node()
-        } else {
-            let mut temp = self;
-            loop {
-                if temp.parent().is_null() {
-                    return NodePtr::null();
-                }
-                if temp.is_left_child() {
-                    return temp.parent();
-                }
-                temp = temp.parent();
-            }
-        }
-    }
-    #[inline]
-    fn prev(self) -> NodePtr<K, V> {
-        if !self.left().is_null() {
-            self.left().max_node()
-        } else {
-            let mut temp = self;
-            loop {
-                if temp.parent().is_null() {
-                    return NodePtr::null();
-                }
-                if temp.is_right_child() {
-                    return temp.parent();
-                }
-                temp = temp.parent();
-            }
-        }
-    }
+
     #[inline]
     fn set_parent(&mut self, parent: NodePtr<K, V>) {
         if self.is_null() {
@@ -760,20 +712,6 @@ impl<K: Ord, V> RedBlackTree<K, V> {
         let obj = Box::from_raw(node.0);
         return obj.pair();
     }
-}
-
-fn test_clone() {
-    let mut m = RedBlackTree::new();
-    assert_eq!(m.len(), 0);
-    m.insert(1, 2);
-    assert_eq!(m.len(), 1);
-    m.insert(2, 4);
-    assert_eq!(m.len(), 2);
-    let m2 = m.clone();
-    m.clear();
-    assert_eq!(*m2.get(&1).unwrap(), 2);
-    assert_eq!(*m2.get(&2).unwrap(), 4);
-    assert_eq!(m2.len(), 2);
 }
 
 fn main() {
