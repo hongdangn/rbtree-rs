@@ -1,11 +1,3 @@
-// Copyright 2017-2018 By tickdream125@hotmail.com.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 use std::cmp::Ord;
 use std::cmp::Ordering;
 use std::fmt::{self, Debug};
@@ -20,8 +12,6 @@ enum Color {
     Red,
     Black,
 }
-
-/*****************RBTreeNode***************************/
 struct RBTreeNode<K: Ord, V> {
     color: Color,
     left: NodePtr<K, V>,
@@ -30,56 +20,46 @@ struct RBTreeNode<K: Ord, V> {
     key: K,
     value: V,
 }
-
 impl<K: Ord, V> RBTreeNode<K, V> {
     #[inline]
     fn pair(self) -> (K, V) {
         (self.key, self.value)
     }
 }
-
 impl<K, V> Debug for RBTreeNode<K, V>
 where
     K: Ord + Debug,
     V: Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "k:{:?} v:{:?} c:{:?}", self.key, self.value, self.color)
+        write!(f, "(k:{:?}-v:{:?}-c:{:?})", self.key, self.value, self.color)
     }
 }
 
-/*****************NodePtr***************************/
 #[derive(Debug)]
 struct NodePtr<K: Ord, V>(*mut RBTreeNode<K, V>);
-
 impl<K: Ord, V> Clone for NodePtr<K, V> {
     fn clone(&self) -> NodePtr<K, V> {
         NodePtr(self.0)
     }
 }
-
 impl<K: Ord, V> Copy for NodePtr<K, V> {}
-
 impl<K: Ord, V> Ord for NodePtr<K, V> {
     fn cmp(&self, other: &NodePtr<K, V>) -> Ordering {
         unsafe { (*self.0).key.cmp(&(*other.0).key) }
     }
 }
-
 impl<K: Ord, V> PartialOrd for NodePtr<K, V> {
     fn partial_cmp(&self, other: &NodePtr<K, V>) -> Option<Ordering> {
         unsafe { Some((*self.0).key.cmp(&(*other.0).key)) }
     }
 }
-
 impl<K: Ord, V> PartialEq for NodePtr<K, V> {
     fn eq(&self, other: &NodePtr<K, V>) -> bool {
         self.0 == other.0
     }
 }
-
 impl<K: Ord, V> Eq for NodePtr<K, V> {}
-
 impl<K: Ord, V> NodePtr<K, V> {
     fn new(k: K, v: V) -> NodePtr<K, V> {
         let node = RBTreeNode {
@@ -92,7 +72,6 @@ impl<K: Ord, V> NodePtr<K, V> {
         };
         NodePtr(Box::into_raw(Box::new(node)))
     }
-
     #[inline]
     fn set_color(&mut self, color: Color) {
         if self.is_null() {
@@ -102,17 +81,14 @@ impl<K: Ord, V> NodePtr<K, V> {
             (*self.0).color = color;
         }
     }
-
     #[inline]
     fn set_red_color(&mut self) {
         self.set_color(Color::Red);
     }
-
     #[inline]
     fn set_black_color(&mut self) {
         self.set_color(Color::Black);
     }
-
     #[inline]
     fn get_color(&self) -> Color {
         if self.is_null() {
@@ -120,7 +96,6 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         unsafe { (*self.0).color }
     }
-
     #[inline]
     fn is_red_color(&self) -> bool {
         if self.is_null() {
@@ -128,7 +103,6 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         unsafe { (*self.0).color == Color::Red }
     }
-
     #[inline]
     fn is_black_color(&self) -> bool {
         if self.is_null() {
@@ -136,17 +110,14 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         unsafe { (*self.0).color == Color::Black }
     }
-
     #[inline]
     fn is_left_child(&self) -> bool {
         self.parent().left() == *self
     }
-
     #[inline]
     fn is_right_child(&self) -> bool {
         self.parent().right() == *self
     }
-
     #[inline]
     fn min_node(self) -> NodePtr<K, V> {
         let mut temp = self.clone();
@@ -155,7 +126,6 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         return temp;
     }
-
     #[inline]
     fn max_node(self) -> NodePtr<K, V> {
         let mut temp = self.clone();
@@ -164,7 +134,6 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         return temp;
     }
-
     #[inline]
     fn next(self) -> NodePtr<K, V> {
         if !self.right().is_null() {
@@ -182,7 +151,6 @@ impl<K: Ord, V> NodePtr<K, V> {
             }
         }
     }
-
     #[inline]
     fn prev(self) -> NodePtr<K, V> {
         if !self.left().is_null() {
@@ -200,7 +168,6 @@ impl<K: Ord, V> NodePtr<K, V> {
             }
         }
     }
-
     #[inline]
     fn set_parent(&mut self, parent: NodePtr<K, V>) {
         if self.is_null() {
@@ -208,7 +175,6 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         unsafe { (*self.0).parent = parent }
     }
-
     #[inline]
     fn set_left(&mut self, left: NodePtr<K, V>) {
         if self.is_null() {
@@ -216,7 +182,6 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         unsafe { (*self.0).left = left }
     }
-
     #[inline]
     fn set_right(&mut self, right: NodePtr<K, V>) {
         if self.is_null() {
@@ -224,7 +189,6 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         unsafe { (*self.0).right = right }
     }
-
     #[inline]
     fn parent(&self) -> NodePtr<K, V> {
         if self.is_null() {
@@ -232,7 +196,6 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         unsafe { (*self.0).parent.clone() }
     }
-
     #[inline]
     fn left(&self) -> NodePtr<K, V> {
         if self.is_null() {
@@ -240,7 +203,6 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         unsafe { (*self.0).left.clone() }
     }
-
     #[inline]
     fn right(&self) -> NodePtr<K, V> {
         if self.is_null() {
@@ -248,12 +210,10 @@ impl<K: Ord, V> NodePtr<K, V> {
         }
         unsafe { (*self.0).right.clone() }
     }
-
     #[inline]
     fn null() -> NodePtr<K, V> {
         NodePtr(ptr::null_mut())
     }
-
     #[inline]
     fn is_null(&self) -> bool {
         self.0.is_null()
@@ -273,94 +233,29 @@ impl<K: Ord + Clone, V: Clone> NodePtr<K, V> {
         }
         node
     }
-}
-
-/// A red black tree implemented with Rust
-/// It is required that the keys implement the [`Ord`] traits.
-
-/// # Examples
-/// ```rust
-/// use rbtree::RBTree;
-/// // type inference lets us omit an explicit type signature (which
-/// // would be `RBTree<&str, &str>` in this example).
-/// let mut book_reviews = RBTree::new();
-///
-/// // review some books.
-/// book_reviews.insert("Adventures of Huckleberry Finn", "My favorite book.");
-/// book_reviews.insert("Grimms' Fairy Tales", "Masterpiece.");
-/// book_reviews.insert("Pride and Prejudice", "Very enjoyable.");
-/// book_reviews.insert("The Adventures of Sherlock Holmes", "Eye lyked it alot.");
-///
-/// // check for a specific one.
-/// if !book_reviews.contains_key(&"Les Misérables") {
-///     println!(
-///         "We've got {} reviews, but Les Misérables ain't one.",
-///         book_reviews.len()
-///     );
-/// }
-///
-/// // oops, this review has a lot of spelling mistakes, let's delete it.
-/// book_reviews.remove(&"The Adventures of Sherlock Holmes");
-///
-/// // look up the values associated with some keys.
-/// let to_find = ["Pride and Prejudice", "Alice's Adventure in Wonderland"];
-/// for book in &to_find {
-///     match book_reviews.get(book) {
-///         Some(review) => println!("{}: {}", book, review),
-///         None => println!("{} is unreviewed.", book),
-///     }
-/// }
-///
-/// // iterate over everything.
-/// for (book, review) in book_reviews.iter() {
-///     println!("{}: \"{}\"", book, review);
-/// }
-///
-/// book_reviews.print_tree();
-/// ```
-///
-/// // A `RBTree` with fixed list of elements can be initialized from an array:
-///  ```
-/// use rbtree::RBTree;
-///  let timber_resources: RBTree<&str, i32> =
-///  [("Norway", 100),
-///   ("Denmark", 50),
-///   ("Iceland", 10)]
-///   .iter().cloned().collect();
-///  // use the values stored in rbtree
-///  ```
-pub struct RBTree<K: Ord, V> {
+}pub struct RedBlackTree<K: Ord, V> {
     root: NodePtr<K, V>,
     len: usize,
 }
-
-unsafe impl<K: Ord, V> Send for RBTree<K, V> {
-}
-
-unsafe impl<K: Ord, V> Sync for RBTree<K, V> {
-}
-
-// Drop all owned pointers if the tree is dropped
-impl<K: Ord, V> Drop for RBTree<K, V> {
+unsafe impl<K: Ord, V> Send for RedBlackTree<K, V> {}
+unsafe impl<K: Ord, V> Sync for RedBlackTree<K, V> {}
+impl<K: Ord, V> Drop for RedBlackTree<K, V> {
     #[inline]
     fn drop(&mut self) {
         self.clear();
     }
 }
-
-/// If key and value are both impl Clone, we can call clone to get a copy.
-impl<K: Ord + Clone, V: Clone> Clone for RBTree<K, V> {
-    fn clone(&self) -> RBTree<K, V> {
+impl<K: Ord + Clone, V: Clone> Clone for RedBlackTree<K, V> {
+    fn clone(&self) -> RedBlackTree<K, V> {
         unsafe {
-            let mut new = RBTree::new();
+            let mut new = RedBlackTree::new();
             new.root = self.root.deep_clone();
             new.len = self.len;
             new
         }
     }
 }
-
-impl<K, V> Debug for RBTree<K, V>
+impl<K, V> Debug for RedBlackTree<K, V>
 where
     K: Ord + Debug,
     V: Debug,
@@ -369,50 +264,35 @@ where
         f.debug_map().entries(self.iter()).finish()
     }
 }
-
-/// This is a method to help us to get inner struct.
-impl<K: Ord + Debug, V: Debug> RBTree<K, V> {
-    fn tree_print(&self, node: NodePtr<K, V>, direction: i32) {
+impl<K: Ord + Debug, V: Debug> RedBlackTree<K, V> {
+    fn tree_print(&self, node: NodePtr<K, V>) {
         if node.is_null() {
             return;
         }
-        if direction == 0 {
-            unsafe {
-                println!("'{:?}' is root node", (*node.0));
-            }
-        } else {
-            let direct = if direction == -1 { "left" } else { "right" };
-            unsafe {
-                println!(
-                    "{:?} is {:?}'s {:?} child ",
-                    (*node.0),
-                    *node.parent().0,
-                    direct
-                );
-            }
+
+        unsafe {
+            print!("{:?} ", *node.0);
         }
-        self.tree_print(node.left(), -1);
-        self.tree_print(node.right(), 1);
+
+        self.tree_print(node.left());
+        self.tree_print(node.right());
     }
 
-    pub fn print_tree(&self) {
+    pub fn print_tree_preorder(&self) {
         if self.root.is_null() {
-            println!("This is a empty tree");
+            println!("Empty tree");
             return;
         }
-        println!("This tree size = {:?}, begin:-------------", self.len());
-        self.tree_print(self.root, 0);
-        println!("end--------------------------");
+        println!("Tree's size: {:?}, Preorder print:", self.len());
+        self.tree_print(self.root);
     }
 }
-
-/// all key be same, but it has multi key, if has multi key, it perhaps no correct
-impl<K, V> PartialEq for RBTree<K, V>
+impl<K, V> PartialEq for RedBlackTree<K, V>
 where
     K: Eq + Ord,
     V: PartialEq,
 {
-    fn eq(&self, other: &RBTree<K, V>) -> bool {
+    fn eq(&self, other: &RedBlackTree<K, V>) -> bool {
         if self.len() != other.len() {
             return false;
         }
@@ -421,15 +301,12 @@ where
             .all(|(key, value)| other.get(key).map_or(false, |v| *value == *v))
     }
 }
-
-impl<K, V> Eq for RBTree<K, V>
+impl<K, V> Eq for RedBlackTree<K, V>
 where
     K: Eq + Ord,
     V: Eq,
-{
-}
-
-impl<'a, K, V> Index<&'a K> for RBTree<K, V>
+{}
+impl<'a, K, V> Index<&'a K> for RedBlackTree<K, V>
 where
     K: Ord,
 {
@@ -440,17 +317,14 @@ where
         self.get(index).expect("no entry found for key")
     }
 }
-
-impl<K: Ord, V> FromIterator<(K, V)> for RBTree<K, V> {
-    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> RBTree<K, V> {
-        let mut tree = RBTree::new();
+impl<K: Ord, V> FromIterator<(K, V)> for RedBlackTree<K, V> {
+    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> RedBlackTree<K, V> {
+        let mut tree = RedBlackTree::new();
         tree.extend(iter);
         tree
     }
 }
-
-/// RBTree into iter
-impl<K: Ord, V> Extend<(K, V)> for RBTree<K, V> {
+impl<K: Ord, V> Extend<(K, V)> for RedBlackTree<K, V> {
     fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
         let iter = iter.into_iter();
         for (k, v) in iter {
@@ -459,22 +333,9 @@ impl<K: Ord, V> Extend<(K, V)> for RBTree<K, V> {
     }
 }
 
-/// provide the rbtree all keys
-/// # Examples
-/// ```
-/// use rbtree::RBTree;
-/// let mut m = RBTree::new();
-/// for i in 1..6 {
-///     m.insert(i, i);
-/// }
-/// let vec = vec![1, 2, 3, 4, 5];
-/// let key_vec: Vec<_> = m.keys().cloned().collect();
-/// assert_eq!(vec, key_vec);
-/// ```
 pub struct Keys<'a, K: Ord + 'a, V: 'a> {
     inner: Iter<'a, K, V>,
 }
-
 impl<'a, K: Ord, V> Clone for Keys<'a, K, V> {
     fn clone(&self) -> Keys<'a, K, V> {
         Keys {
@@ -482,44 +343,25 @@ impl<'a, K: Ord, V> Clone for Keys<'a, K, V> {
         }
     }
 }
-
 impl<'a, K: Ord + Debug, V> fmt::Debug for Keys<'a, K, V> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_list().entries(self.clone()).finish()
     }
 }
-
 impl<'a, K: Ord, V> Iterator for Keys<'a, K, V> {
     type Item = &'a K;
-
     #[inline]
     fn next(&mut self) -> Option<&'a K> {
         self.inner.next().map(|(k, _)| k)
     }
-
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.inner.size_hint()
     }
 }
-
-/// provide the rbtree all values order by key
-/// # Examples
-/// ```
-/// use rbtree::RBTree;
-/// let mut m = RBTree::new();
-/// m.insert(2, 5);
-/// m.insert(1, 6);
-/// m.insert(3, 8);
-/// m.insert(4, 9);
-/// let vec = vec![6, 5, 8, 9];
-/// let key_vec: Vec<_> = m.values().cloned().collect();
-/// assert_eq!(vec, key_vec);
-/// ```
 pub struct Values<'a, K: 'a + Ord, V: 'a> {
     inner: Iter<'a, K, V>,
 }
-
 impl<'a, K: Ord, V> Clone for Values<'a, K, V> {
     fn clone(&self) -> Values<'a, K, V> {
         Values {
@@ -527,47 +369,25 @@ impl<'a, K: Ord, V> Clone for Values<'a, K, V> {
         }
     }
 }
-
 impl<'a, K: Ord + Debug, V: Debug> fmt::Debug for Values<'a, K, V> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_list().entries(self.clone()).finish()
     }
 }
-
 impl<'a, K: Ord, V> Iterator for Values<'a, K, V> {
     type Item = &'a V;
-
     #[inline]
     fn next(&mut self) -> Option<&'a V> {
         self.inner.next().map(|(_, v)| v)
     }
-
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.inner.size_hint()
     }
 }
-
-/// provide the rbtree all values and it can be modify
-/// # Examples
-/// ```
-/// use rbtree::RBTree;
-/// let mut m = RBTree::new();
-/// for i in 0..32 {
-///     m.insert(i, i);
-/// }
-/// assert_eq!(m.len(), 32);
-/// for v in m.values_mut() {
-///     *v *= 2;
-/// }
-/// for i in 0..32 {
-///     assert_eq!(m.get(&i).unwrap(), &(i * 2));
-/// }
-/// ```
 pub struct ValuesMut<'a, K: 'a + Ord, V: 'a> {
     inner: IterMut<'a, K, V>,
 }
-
 impl<'a, K: Ord, V> Clone for ValuesMut<'a, K, V> {
     fn clone(&self) -> ValuesMut<'a, K, V> {
         ValuesMut {
@@ -575,13 +395,11 @@ impl<'a, K: Ord, V> Clone for ValuesMut<'a, K, V> {
         }
     }
 }
-
 impl<'a, K: Ord + Debug, V: Debug> fmt::Debug for ValuesMut<'a, K, V> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_list().entries(self.clone()).finish()
     }
 }
-
 impl<'a, K: Ord, V> Iterator for ValuesMut<'a, K, V> {
     type Item = &'a mut V;
 
@@ -596,13 +414,12 @@ impl<'a, K: Ord, V> Iterator for ValuesMut<'a, K, V> {
     }
 }
 
-/// Convert RBTree to iter, move out the tree.
+/// Convert RedBlackTree to iter, move out the tree.
 pub struct IntoIter<K: Ord, V> {
     head: NodePtr<K, V>,
     tail: NodePtr<K, V>,
     len: usize,
 }
-
 // Drop all owned pointers if the collection is dropped
 impl<K: Ord, V> Drop for IntoIter<K, V> {
     #[inline]
@@ -660,22 +477,6 @@ impl<K: Ord, V> DoubleEndedIterator for IntoIter<K, V> {
     }
 }
 
-/// provide iter ref for RBTree
-/// # Examples
-/// ```
-/// use rbtree::RBTree;
-/// let mut m = RBTree::new();
-/// for i in 0..32 {
-///     m.insert(i, i * 2);
-/// }
-/// assert_eq!(m.len(), 32);
-/// let mut observed: u32 = 0;
-/// for (k, v) in m.iter() {
-///     assert_eq!(*v, *k * 2);
-///     observed |= 1 << *k;
-/// }
-/// assert_eq!(observed, 0xFFFF_FFFF);
-/// ```
 pub struct Iter<'a, K: Ord + 'a, V: 'a> {
     head: NodePtr<K, V>,
     tail: NodePtr<K, V>,
@@ -732,22 +533,6 @@ impl<'a, K: Ord + 'a, V: 'a> DoubleEndedIterator for Iter<'a, K, V> {
     }
 }
 
-/// provide iter mut ref for RBTree
-/// # Examples
-/// ```
-/// use rbtree::RBTree;
-/// let mut m = RBTree::new();
-/// for i in 0..32 {
-///     m.insert(i, i);
-/// }
-/// assert_eq!(m.len(), 32);
-/// for (_, v) in m.iter_mut() {
-///     *v *= 2;
-/// }
-/// for i in 0..32 {
-///     assert_eq!(m.get(&i).unwrap(), &(i * 2));
-/// }
-/// ```
 pub struct IterMut<'a, K: Ord + 'a, V: 'a> {
     head: NodePtr<K, V>,
     tail: NodePtr<K, V>,
@@ -807,7 +592,7 @@ impl<'a, K: Ord + 'a, V: 'a> DoubleEndedIterator for IterMut<'a, K, V> {
     }
 }
 
-impl<K: Ord, V> IntoIterator for RBTree<K, V> {
+impl<K: Ord, V> IntoIterator for RedBlackTree<K, V> {
     type Item = (K, V);
     type IntoIter = IntoIter<K, V>;
 
@@ -831,41 +616,27 @@ impl<K: Ord, V> IntoIterator for RBTree<K, V> {
     }
 }
 
-impl<K: Ord, V> RBTree<K, V> {
-    /// Creates an empty `RBTree`.
-    pub fn new() -> RBTree<K, V> {
-        RBTree {
+impl<K: Ord, V> RedBlackTree<K, V> {
+    /// Creates an empty `RedBlackTree`.
+    pub fn new() -> RedBlackTree<K, V> {
+        RedBlackTree {
             root: NodePtr::null(),
             len: 0,
         }
     }
 
-    /// Returns the len of `RBTree`.
+    /// Returns the len of `RedBlackTree`.
     #[inline]
     pub fn len(&self) -> usize {
         self.len
     }
 
-    /// Returns `true` if the `RBTree` is empty.
+    /// Returns `true` if the `RedBlackTree` is empty.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.root.is_null()
     }
 
-    /*
-     * 对红黑树的节点(x)进行左旋转
-     *
-     * 左旋示意图(对节点x进行左旋)：
-     *      px                              px
-     *     /                               /
-     *    x                               y
-     *   /  \      --(左旋)-->           / \                #
-     *  lx   y                          x  ry
-     *     /   \                       /  \
-     *    ly   ry                     lx  ly
-     *
-     *
-     */
     #[inline]
     unsafe fn left_rotate(&mut self, mut node: NodePtr<K, V>) {
         let mut temp = node.right();
@@ -888,19 +659,6 @@ impl<K: Ord, V> RBTree<K, V> {
         node.set_parent(temp.clone());
     }
 
-    /*
-     * 对红黑树的节点(y)进行右旋转
-     *
-     * 右旋示意图(对节点y进行左旋)：
-     *            py                               py
-     *           /                                /
-     *          y                                x
-     *         /  \      --(右旋)-->            /  \                     #
-     *        x   ry                           lx   y
-     *       / \                                   / \                   #
-     *      lx  rx                                rx  ry
-     *
-     */
     #[inline]
     unsafe fn right_rotate(&mut self, mut node: NodePtr<K, V>) {
         let mut temp = node.left();
@@ -923,20 +681,8 @@ impl<K: Ord, V> RBTree<K, V> {
         node.set_parent(temp.clone());
     }
 
-    /// replace value if key exist, if not exist insert it.
-    /// # Examples
-    /// ```
-    /// use rbtree::RBTree;
-    /// let mut m = RBTree::new();
-    /// assert_eq!(m.len(), 0);
-    /// m.insert(2, 4);
-    /// assert_eq!(m.len(), 1);
-    /// assert_eq!(m.replace_or_insert(2, 6).unwrap(), 4);
-    /// assert_eq!(m.len(), 1);
-    /// assert_eq!(*m.get(&2).unwrap(), 6);
-    /// ```
     #[inline]
-    pub fn replace_or_insert(&mut self, k: K, mut v: V) -> Option<V> {
+    pub fn check_and_insert(&mut self, k: K, mut v: V) -> Option<V> {
         let node = self.find_node(&k);
         if node.is_null() {
             self.insert(k, v);
@@ -958,9 +704,7 @@ impl<K: Ord, V> RBTree<K, V> {
         while node.parent().is_red_color() {
             parent = node.parent();
             gparent = parent.parent();
-            //若“父节点”是“祖父节点的左孩子”
             if parent == gparent.left() {
-                // Case 1条件：叔叔节点是红色
                 let mut uncle = gparent.right();
                 if !uncle.is_null() && uncle.is_red_color() {
                     uncle.set_black_color();
@@ -970,7 +714,6 @@ impl<K: Ord, V> RBTree<K, V> {
                     continue;
                 }
 
-                // Case 2条件：叔叔是黑色，且当前节点是右孩子
                 if parent.right() == node {
                     self.left_rotate(parent);
                     let temp = parent;
@@ -978,12 +721,10 @@ impl<K: Ord, V> RBTree<K, V> {
                     node = temp;
                 }
 
-                // Case 3条件：叔叔是黑色，且当前节点是左孩子。
                 parent.set_black_color();
                 gparent.set_red_color();
                 self.right_rotate(gparent);
             } else {
-                // Case 1条件：叔叔节点是红色
                 let mut uncle = gparent.left();
                 if !uncle.is_null() && uncle.is_red_color() {
                     uncle.set_black_color();
@@ -993,7 +734,6 @@ impl<K: Ord, V> RBTree<K, V> {
                     continue;
                 }
 
-                // Case 2条件：叔叔是黑色，且当前节点是右孩子
                 if parent.left() == node {
                     self.right_rotate(parent);
                     let temp = parent;
@@ -1001,7 +741,6 @@ impl<K: Ord, V> RBTree<K, V> {
                     node = temp;
                 }
 
-                // Case 3条件：叔叔是黑色，且当前节点是左孩子。
                 parent.set_black_color();
                 gparent.set_red_color();
                 self.left_rotate(gparent);
@@ -1191,18 +930,6 @@ impl<K: Ord, V> RBTree<K, V> {
         }
     }
 
-    /// clear all red back tree elements.
-    /// # Examples
-    /// ```
-    /// use rbtree::RBTree;
-    /// let mut m = RBTree::new();
-    /// for i in 0..6 {
-    ///     m.insert(i, i);
-    /// }
-    /// assert_eq!(m.len(), 6);
-    /// m.clear();
-    /// assert_eq!(m.len(), 0);
-    /// ```
     #[inline]
     pub fn clear(&mut self) {
         let root = self.root;
@@ -1211,7 +938,7 @@ impl<K: Ord, V> RBTree<K, V> {
         self.len = 0;
     }
 
-    /// Empties the `RBTree` without freeing objects in it.
+    /// Empties the `RedBlackTree` without freeing objects in it.
     #[inline]
     fn fast_clear(&mut self) {
         self.root = NodePtr::null();
@@ -1219,9 +946,10 @@ impl<K: Ord, V> RBTree<K, V> {
     }
 
     #[inline]
-    pub fn remove(&mut self, k: &K) -> Option<V> {
+    pub fn del_node(&mut self, k: &K) -> Option<V> {
         let node = self.find_node(k);
         if node.is_null() {
+            println!("Wrong key.");
             return None;
         }
         unsafe { Some(self.delete(node).1) }
@@ -1233,7 +961,6 @@ impl<K: Ord, V> RBTree<K, V> {
         while node != self.root && node.is_black_color() {
             if parent.left() == node {
                 other = parent.right();
-                //x的兄弟w是红色的
                 if other.is_red_color() {
                     other.set_black_color();
                     parent.set_red_color();
@@ -1241,20 +968,17 @@ impl<K: Ord, V> RBTree<K, V> {
                     other = parent.right();
                 }
 
-                //x的兄弟w是黑色，且w的俩个孩子也都是黑色的
                 if other.left().is_black_color() && other.right().is_black_color() {
                     other.set_red_color();
                     node = parent;
                     parent = node.parent();
                 } else {
-                    //x的兄弟w是黑色的，并且w的左孩子是红色，右孩子为黑色。
                     if other.right().is_black_color() {
                         other.left().set_black_color();
                         other.set_red_color();
                         self.right_rotate(other);
                         other = parent.right();
                     }
-                    //x的兄弟w是黑色的；并且w的右孩子是红色的，左孩子任意颜色。
                     other.set_color(parent.get_color());
                     parent.set_black_color();
                     other.right().set_black_color();
@@ -1264,7 +988,6 @@ impl<K: Ord, V> RBTree<K, V> {
                 }
             } else {
                 other = parent.left();
-                //x的兄弟w是红色的
                 if other.is_red_color() {
                     other.set_black_color();
                     parent.set_red_color();
@@ -1272,20 +995,17 @@ impl<K: Ord, V> RBTree<K, V> {
                     other = parent.left();
                 }
 
-                //x的兄弟w是黑色，且w的俩个孩子也都是黑色的
                 if other.left().is_black_color() && other.right().is_black_color() {
                     other.set_red_color();
                     node = parent;
                     parent = node.parent();
                 } else {
-                    //x的兄弟w是黑色的，并且w的左孩子是红色，右孩子为黑色。
                     if other.left().is_black_color() {
                         other.right().set_black_color();
                         other.set_red_color();
                         self.left_rotate(other);
                         other = parent.left();
                     }
-                    //x的兄弟w是黑色的；并且w的右孩子是红色的，左孩子任意颜色。
                     other.set_color(parent.get_color());
                     parent.set_black_color();
                     other.left().set_black_color();
@@ -1306,10 +1026,7 @@ impl<K: Ord, V> RBTree<K, V> {
         let color;
 
         self.len -= 1;
-        // 被删除节点的"左右孩子都不为空"的情况。
         if !node.left().is_null() && !node.right().is_null() {
-            // 被删节点的后继节点。(称为"取代节点")
-            // 用它来取代"被删节点"的位置，然后再将"被删节点"去掉。
             let mut replace = node.right().min_node();
             if node == self.root {
                 self.root = replace;
@@ -1320,9 +1037,6 @@ impl<K: Ord, V> RBTree<K, V> {
                     node.parent().set_right(replace);
                 }
             }
-
-            // child是"取代节点"的右孩子，也是需要"调整的节点"。
-            // "取代节点"肯定不存在左孩子！因为它是一个后继节点。
             child = replace.right();
             parent = replace.parent();
             color = replace.get_color();
@@ -1380,26 +1094,6 @@ impl<K: Ord, V> RBTree<K, V> {
         return obj.pair();
     }
 
-    /// Return the keys iter
-    #[inline]
-    pub fn keys(&self) -> Keys<K, V> {
-        Keys { inner: self.iter() }
-    }
-
-    /// Return the value iter
-    #[inline]
-    pub fn values(&self) -> Values<K, V> {
-        Values { inner: self.iter() }
-    }
-
-    /// Return the value iter mut
-    #[inline]
-    pub fn values_mut(&mut self) -> ValuesMut<K, V> {
-        ValuesMut {
-            inner: self.iter_mut(),
-        }
-    }
-
     /// Return the key and value iter
     #[inline]
     pub fn iter(&self) -> Iter<K, V> {
@@ -1410,408 +1104,22 @@ impl<K: Ord, V> RBTree<K, V> {
             _marker: marker::PhantomData,
         }
     }
-
-    /// Return the key and mut value iter
-    #[inline]
-    pub fn iter_mut(&mut self) -> IterMut<K, V> {
-        IterMut {
-            head: self.first_child(),
-            tail: self.last_child(),
-            len: self.len,
-            _marker: marker::PhantomData,
-        }
-    }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::RBTree;
-
-    #[test]
-    fn test_insert() {
-        let mut m = RBTree::new();
-        assert_eq!(m.len(), 0);
-        m.insert(1, 2);
-        assert_eq!(m.len(), 1);
-        m.insert(2, 4);
-        assert_eq!(m.len(), 2);
-        m.insert(2, 6);
-        assert_eq!(m.len(), 3);
-        assert_eq!(*m.get(&1).unwrap(), 2);
-        assert_eq!(*m.get(&2).unwrap(), 4);
-        assert_eq!(*m.get(&2).unwrap(), 4);
-    }
-
-    #[test]
-    fn test_replace() {
-        let mut m = RBTree::new();
-        assert_eq!(m.len(), 0);
-        m.insert(2, 4);
-        assert_eq!(m.len(), 1);
-        assert_eq!(m.replace_or_insert(2, 6).unwrap(), 4);
-        assert_eq!(m.len(), 1);
-        assert_eq!(*m.get(&2).unwrap(), 6);
-    }
-
-    #[test]
-    fn test_clone() {
-        let mut m = RBTree::new();
-        assert_eq!(m.len(), 0);
-        m.insert(1, 2);
-        assert_eq!(m.len(), 1);
-        m.insert(2, 4);
-        assert_eq!(m.len(), 2);
-        let m2 = m.clone();
-        m.clear();
-        assert_eq!(*m2.get(&1).unwrap(), 2);
-        assert_eq!(*m2.get(&2).unwrap(), 4);
-        assert_eq!(m2.len(), 2);
-    }
-
-    #[test]
-    fn test_empty_remove() {
-        let mut m: RBTree<isize, bool> = RBTree::new();
-        assert_eq!(m.remove(&0), None);
-    }
-
-    #[test]
-    fn test_empty_iter() {
-        let mut m: RBTree<isize, bool> = RBTree::new();
-        assert_eq!(m.iter().next(), None);
-        assert_eq!(m.iter_mut().next(), None);
-        assert_eq!(m.len(), 0);
-        assert!(m.is_empty());
-        assert_eq!(m.into_iter().next(), None);
-    }
-
-    #[test]
-    fn test_lots_of_insertions() {
-        let mut m = RBTree::new();
-
-        // Try this a few times to make sure we never screw up the hashmap's
-        // internal state.
-        for _ in 0..10 {
-            assert!(m.is_empty());
-
-            for i in 1..101 {
-                m.insert(i, i);
-
-                for j in 1..i + 1 {
-                    let r = m.get(&j);
-                    assert_eq!(r, Some(&j));
-                }
-
-                for j in i + 1..101 {
-                    let r = m.get(&j);
-                    assert_eq!(r, None);
-                }
-            }
-
-            for i in 101..201 {
-                assert!(!m.contains_key(&i));
-            }
-
-            // remove forwards
-            for i in 1..101 {
-                assert!(m.remove(&i).is_some());
-
-                for j in 1..i + 1 {
-                    assert!(!m.contains_key(&j));
-                }
-
-                for j in i + 1..101 {
-                    assert!(m.contains_key(&j));
-                }
-            }
-
-            for i in 1..101 {
-                assert!(!m.contains_key(&i));
-            }
-
-            for i in 1..101 {
-                m.insert(i, i);
-            }
-
-            // remove backwards
-            for i in (1..101).rev() {
-                assert!(m.remove(&i).is_some());
-
-                for j in i..101 {
-                    assert!(!m.contains_key(&j));
-                }
-
-                for j in 1..i {
-                    assert!(m.contains_key(&j));
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn test_find_mut() {
-        let mut m = RBTree::new();
-        m.insert(1, 12);
-        m.insert(2, 8);
-        m.insert(5, 14);
-        let new = 100;
-        match m.get_mut(&5) {
-            None => panic!(),
-            Some(x) => *x = new,
-        }
-        assert_eq!(m.get(&5), Some(&new));
-    }
-
-    #[test]
-    fn test_remove() {
-        let mut m = RBTree::new();
-        m.insert(1, 2);
-        assert_eq!(*m.get(&1).unwrap(), 2);
-        m.insert(5, 3);
-        assert_eq!(*m.get(&5).unwrap(), 3);
-        m.insert(9, 4);
-        assert_eq!(*m.get(&1).unwrap(), 2);
-        assert_eq!(*m.get(&5).unwrap(), 3);
-        assert_eq!(*m.get(&9).unwrap(), 4);
-        assert_eq!(m.remove(&1).unwrap(), 2);
-        assert_eq!(m.remove(&5).unwrap(), 3);
-        assert_eq!(m.remove(&9).unwrap(), 4);
-        assert_eq!(m.len(), 0);
-    }
-
-    #[test]
-    fn test_is_empty() {
-        let mut m = RBTree::new();
-        m.insert(1, 2);
-        assert!(!m.is_empty());
-        assert!(m.remove(&1).is_some());
-        assert!(m.is_empty());
-    }
-
-    #[test]
-    fn test_pop() {
-        let mut m = RBTree::new();
-        m.insert(2, 4);
-        m.insert(1, 2);
-        m.insert(3, 6);
-        assert_eq!(m.len(), 3);
-        assert_eq!(m.pop_first(), Some((1, 2)));
-        assert_eq!(m.len(), 2);
-        assert_eq!(m.pop_last(), Some((3, 6)));
-        assert_eq!(m.len(), 1);
-        assert_eq!(m.get_first(), Some((&2, &4)));
-        assert_eq!(m.get_last(), Some((&2, &4)));
-    }
-
-    #[test]
-    fn test_iterate() {
-        let mut m = RBTree::new();
-        for i in 0..32 {
-            m.insert(i, i * 2);
-        }
-        assert_eq!(m.len(), 32);
-
-        let mut observed: u32 = 0;
-
-        for (k, v) in m.iter() {
-            assert_eq!(*v, *k * 2);
-            observed |= 1 << *k;
-        }
-        assert_eq!(observed, 0xFFFF_FFFF);
-    }
-
-    #[test]
-    fn test_keys() {
-        let vec = vec![(1, 'a'), (2, 'b'), (3, 'c')];
-        let map: RBTree<_, _> = vec.into_iter().collect();
-        let keys: Vec<_> = map.keys().cloned().collect();
-        assert_eq!(keys.len(), 3);
-        assert!(keys.contains(&1));
-        assert!(keys.contains(&2));
-        assert!(keys.contains(&3));
-    }
-
-    #[test]
-    fn test_values() {
-        let vec = vec![(1, 'a'), (2, 'b'), (3, 'c')];
-        let map: RBTree<_, _> = vec.into_iter().collect();
-        let values: Vec<_> = map.values().cloned().collect();
-        assert_eq!(values.len(), 3);
-        assert!(values.contains(&'a'));
-        assert!(values.contains(&'b'));
-        assert!(values.contains(&'c'));
-    }
-
-    #[test]
-    fn test_values_mut() {
-        let vec = vec![(1, 1), (2, 2), (3, 3)];
-        let mut map: RBTree<_, _> = vec.into_iter().collect();
-        for value in map.values_mut() {
-            *value = (*value) * 2
-        }
-        let values: Vec<_> = map.values().cloned().collect();
-        assert_eq!(values.len(), 3);
-        assert!(values.contains(&2));
-        assert!(values.contains(&4));
-        assert!(values.contains(&6));
-    }
-
-    #[test]
-    fn test_find() {
-        let mut m = RBTree::new();
-        assert!(m.get(&1).is_none());
-        m.insert(1, 2);
-        match m.get(&1) {
-            None => panic!(),
-            Some(v) => assert_eq!(*v, 2),
-        }
-    }
-
-    #[test]
-    fn test_eq() {
-        let mut m1 = RBTree::new();
-        m1.insert(1, 2);
-        m1.insert(2, 3);
-        m1.insert(3, 4);
-
-        let mut m2 = RBTree::new();
-        m2.insert(1, 2);
-        m2.insert(2, 3);
-
-        assert!(m1 != m2);
-
-        m2.insert(3, 4);
-
-        assert_eq!(m1, m2);
-    }
-
-    #[test]
-    fn test_show() {
-        let mut map = RBTree::new();
-        let empty: RBTree<i32, i32> = RBTree::new();
-
-        map.insert(1, 2);
-        map.insert(3, 4);
-
-        let map_str = format!("{:?}", map);
-
-        assert!(map_str == "{1: 2, 3: 4}" || map_str == "{3: 4, 1: 2}");
-        assert_eq!(format!("{:?}", empty), "{}");
-    }
-
-    #[test]
-    fn test_from_iter() {
-        let xs = [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6)];
-
-        let map: RBTree<_, _> = xs.iter().cloned().collect();
-
-        for &(k, v) in &xs {
-            assert_eq!(map.get(&k), Some(&v));
-        }
-    }
-
-    #[test]
-    fn test_size_hint() {
-        let xs = [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6)];
-
-        let map: RBTree<_, _> = xs.iter().cloned().collect();
-
-        let mut iter = map.iter();
-
-        for _ in iter.by_ref().take(3) {}
-
-        assert_eq!(iter.size_hint(), (3, Some(3)));
-    }
-
-    #[test]
-    fn test_iter_len() {
-        let xs = [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6)];
-
-        let map: RBTree<_, _> = xs.iter().cloned().collect();
-
-        let mut iter = map.iter();
-
-        for _ in iter.by_ref().take(3) {}
-
-        assert_eq!(iter.count(), 3);
-    }
-
-    #[test]
-    fn test_mut_size_hint() {
-        let xs = [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6)];
-
-        let mut map: RBTree<_, _> = xs.iter().cloned().collect();
-
-        let mut iter = map.iter_mut();
-
-        for _ in iter.by_ref().take(3) {}
-
-        assert_eq!(iter.size_hint(), (3, Some(3)));
-    }
-
-    #[test]
-    fn test_iter_mut_len() {
-        let xs = [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6)];
-
-        let mut map: RBTree<_, _> = xs.iter().cloned().collect();
-
-        let mut iter = map.iter_mut();
-
-        for _ in iter.by_ref().take(3) {}
-
-        assert_eq!(iter.count(), 3);
-    }
-
-    #[test]
-    fn test_index() {
-        let mut map = RBTree::new();
-
-        map.insert(1, 2);
-        map.insert(2, 1);
-        map.insert(3, 4);
-
-        assert_eq!(map[&2], 1);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_index_nonexistent() {
-        let mut map = RBTree::new();
-
-        map.insert(1, 2);
-        map.insert(2, 1);
-        map.insert(3, 4);
-
-        map[&4];
-    }
-
-    #[test]
-    fn test_extend_iter() {
-        let mut a = RBTree::new();
-        a.insert(1, "one");
-        let mut b = RBTree::new();
-        b.insert(2, "two");
-        b.insert(3, "three");
-
-        a.extend(b.into_iter());
-
-        assert_eq!(a.len(), 3);
-        assert_eq!(a[&1], "one");
-        assert_eq!(a[&2], "two");
-        assert_eq!(a[&3], "three");
-    }
-
-    #[test]
-    fn test_rev_iter() {
-        let mut a = RBTree::new();
-        a.insert(1, 1);
-        a.insert(2, 2);
-        a.insert(3, 3);
-
-        assert_eq!(a.len(), 3);
-        let mut cache = vec![];
-        for e in a.iter().rev() {
-            cache.push(e.0.clone());
-        }
-        assert_eq!(&cache, &vec![3, 2, 1]);
-    }
+fn main() {
+    let mut a = RedBlackTree::new();
+    assert!(a.is_empty());
+
+    a.check_and_insert(1, 15);
+    a.check_and_insert(2, 17);
+    a.check_and_insert(3, 32);
+    a.check_and_insert(4, 22);
+    a.check_and_insert(2, 15);
+    a.check_and_insert(2, 40);
+    // a.check_and_insert()
+    a.del_node(&2);
+    a.del_node(&2);
+
+    a.print_tree_preorder();    
+    assert!(!a.is_empty());
 }
