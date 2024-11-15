@@ -1,8 +1,6 @@
 use std::cmp::Ord;
 use std::cmp::Ordering;
 use std::fmt::{self, Debug};
-use std::iter::{FromIterator, IntoIterator};
-use std::marker;
 use std::mem;
 use std::ops::Index;
 use std::ptr;
@@ -255,15 +253,7 @@ impl<K: Ord + Clone, V: Clone> Clone for RedBlackTree<K, V> {
         }
     }
 }
-impl<K, V> Debug for RedBlackTree<K, V>
-where
-    K: Ord + Debug,
-    V: Debug,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_map().entries(self.iter()).finish()
-    }
-}
+
 impl<K: Ord + Debug, V: Debug> RedBlackTree<K, V> {
     fn tree_print(&self, node: NodePtr<K, V>) {
         if node.is_null() {
@@ -287,25 +277,7 @@ impl<K: Ord + Debug, V: Debug> RedBlackTree<K, V> {
         self.tree_print(self.root);
     }
 }
-impl<K, V> PartialEq for RedBlackTree<K, V>
-where
-    K: Eq + Ord,
-    V: PartialEq,
-{
-    fn eq(&self, other: &RedBlackTree<K, V>) -> bool {
-        if self.len() != other.len() {
-            return false;
-        }
 
-        self.iter()
-            .all(|(key, value)| other.get(key).map_or(false, |v| *value == *v))
-    }
-}
-impl<K, V> Eq for RedBlackTree<K, V>
-where
-    K: Eq + Ord,
-    V: Eq,
-{}
 impl<'a, K, V> Index<&'a K> for RedBlackTree<K, V>
 where
     K: Ord,
@@ -315,304 +287,6 @@ where
     #[inline]
     fn index(&self, index: &K) -> &V {
         self.get(index).expect("no entry found for key")
-    }
-}
-impl<K: Ord, V> FromIterator<(K, V)> for RedBlackTree<K, V> {
-    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> RedBlackTree<K, V> {
-        let mut tree = RedBlackTree::new();
-        tree.extend(iter);
-        tree
-    }
-}
-impl<K: Ord, V> Extend<(K, V)> for RedBlackTree<K, V> {
-    fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
-        let iter = iter.into_iter();
-        for (k, v) in iter {
-            self.insert(k, v);
-        }
-    }
-}
-
-pub struct Keys<'a, K: Ord + 'a, V: 'a> {
-    inner: Iter<'a, K, V>,
-}
-impl<'a, K: Ord, V> Clone for Keys<'a, K, V> {
-    fn clone(&self) -> Keys<'a, K, V> {
-        Keys {
-            inner: self.inner.clone(),
-        }
-    }
-}
-impl<'a, K: Ord + Debug, V> fmt::Debug for Keys<'a, K, V> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_list().entries(self.clone()).finish()
-    }
-}
-impl<'a, K: Ord, V> Iterator for Keys<'a, K, V> {
-    type Item = &'a K;
-    #[inline]
-    fn next(&mut self) -> Option<&'a K> {
-        self.inner.next().map(|(k, _)| k)
-    }
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
-    }
-}
-pub struct Values<'a, K: 'a + Ord, V: 'a> {
-    inner: Iter<'a, K, V>,
-}
-impl<'a, K: Ord, V> Clone for Values<'a, K, V> {
-    fn clone(&self) -> Values<'a, K, V> {
-        Values {
-            inner: self.inner.clone(),
-        }
-    }
-}
-impl<'a, K: Ord + Debug, V: Debug> fmt::Debug for Values<'a, K, V> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_list().entries(self.clone()).finish()
-    }
-}
-impl<'a, K: Ord, V> Iterator for Values<'a, K, V> {
-    type Item = &'a V;
-    #[inline]
-    fn next(&mut self) -> Option<&'a V> {
-        self.inner.next().map(|(_, v)| v)
-    }
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
-    }
-}
-pub struct ValuesMut<'a, K: 'a + Ord, V: 'a> {
-    inner: IterMut<'a, K, V>,
-}
-impl<'a, K: Ord, V> Clone for ValuesMut<'a, K, V> {
-    fn clone(&self) -> ValuesMut<'a, K, V> {
-        ValuesMut {
-            inner: self.inner.clone(),
-        }
-    }
-}
-impl<'a, K: Ord + Debug, V: Debug> fmt::Debug for ValuesMut<'a, K, V> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_list().entries(self.clone()).finish()
-    }
-}
-impl<'a, K: Ord, V> Iterator for ValuesMut<'a, K, V> {
-    type Item = &'a mut V;
-
-    #[inline]
-    fn next(&mut self) -> Option<&'a mut V> {
-        self.inner.next().map(|(_, v)| v)
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
-    }
-}
-
-/// Convert RedBlackTree to iter, move out the tree.
-pub struct IntoIter<K: Ord, V> {
-    head: NodePtr<K, V>,
-    tail: NodePtr<K, V>,
-    len: usize,
-}
-// Drop all owned pointers if the collection is dropped
-impl<K: Ord, V> Drop for IntoIter<K, V> {
-    #[inline]
-    fn drop(&mut self) {
-        for (_, _) in self {}
-    }
-}
-
-impl<K: Ord, V> Iterator for IntoIter<K, V> {
-    type Item = (K, V);
-
-    fn next(&mut self) -> Option<(K, V)> {
-        if self.len == 0 {
-            return None;
-        }
-
-        if self.head.is_null() {
-            return None;
-        }
-
-        let next = self.head.next();
-        let (k, v) = unsafe {
-            (
-                core::ptr::read(&(*self.head.0).key),
-                core::ptr::read(&(*self.head.0).value),
-            )
-        };
-        self.head = next;
-        self.len -= 1;
-        Some((k, v))
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.len, Some(self.len))
-    }
-}
-
-impl<K: Ord, V> DoubleEndedIterator for IntoIter<K, V> {
-    #[inline]
-    fn next_back(&mut self) -> Option<(K, V)> {
-        if self.len == 0 {
-            return None;
-        }
-
-        if self.tail.is_null() {
-            return None;
-        }
-
-        let prev = self.tail.prev();
-        let obj = unsafe { Box::from_raw(self.tail.0) };
-        let (k, v) = obj.pair();
-        self.tail = prev;
-        self.len -= 1;
-        Some((k, v))
-    }
-}
-
-pub struct Iter<'a, K: Ord + 'a, V: 'a> {
-    head: NodePtr<K, V>,
-    tail: NodePtr<K, V>,
-    len: usize,
-    _marker: marker::PhantomData<&'a ()>,
-}
-
-impl<'a, K: Ord + 'a, V: 'a> Clone for Iter<'a, K, V> {
-    fn clone(&self) -> Iter<'a, K, V> {
-        Iter {
-            head: self.head,
-            tail: self.tail,
-            len: self.len,
-            _marker: self._marker,
-        }
-    }
-}
-
-impl<'a, K: Ord + 'a, V: 'a> Iterator for Iter<'a, K, V> {
-    type Item = (&'a K, &'a V);
-
-    fn next(&mut self) -> Option<(&'a K, &'a V)> {
-        if self.len == 0 {
-            return None;
-        }
-
-        if self.head.is_null() {
-            return None;
-        }
-
-        let (k, v) = unsafe { (&(*self.head.0).key, &(*self.head.0).value) };
-        self.head = self.head.next();
-        self.len -= 1;
-        Some((k, v))
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.len, Some(self.len))
-    }
-}
-
-impl<'a, K: Ord + 'a, V: 'a> DoubleEndedIterator for Iter<'a, K, V> {
-    #[inline]
-    fn next_back(&mut self) -> Option<(&'a K, &'a V)> {
-        // println!("len = {:?}", self.len);
-        if self.len == 0 {
-            return None;
-        }
-
-        let (k, v) = unsafe { (&(*self.tail.0).key, &(*self.tail.0).value) };
-        self.tail = self.tail.prev();
-        self.len -= 1;
-        Some((k, v))
-    }
-}
-
-pub struct IterMut<'a, K: Ord + 'a, V: 'a> {
-    head: NodePtr<K, V>,
-    tail: NodePtr<K, V>,
-    len: usize,
-    _marker: marker::PhantomData<&'a ()>,
-}
-
-impl<'a, K: Ord + 'a, V: 'a> Clone for IterMut<'a, K, V> {
-    fn clone(&self) -> IterMut<'a, K, V> {
-        IterMut {
-            head: self.head,
-            tail: self.tail,
-            len: self.len,
-            _marker: self._marker,
-        }
-    }
-}
-
-impl<'a, K: Ord + 'a, V: 'a> Iterator for IterMut<'a, K, V> {
-    type Item = (&'a K, &'a mut V);
-
-    fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
-        if self.len == 0 {
-            return None;
-        }
-
-        if self.head.is_null() {
-            return None;
-        }
-
-        let (k, v) = unsafe { (&(*self.head.0).key, &mut (*self.head.0).value) };
-        self.head = self.head.next();
-        self.len -= 1;
-        Some((k, v))
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.len, Some(self.len))
-    }
-}
-
-impl<'a, K: Ord + 'a, V: 'a> DoubleEndedIterator for IterMut<'a, K, V> {
-    #[inline]
-    fn next_back(&mut self) -> Option<(&'a K, &'a mut V)> {
-        if self.len == 0 {
-            return None;
-        }
-
-        if self.tail == self.head {
-            return None;
-        }
-
-        let (k, v) = unsafe { (&(*self.tail.0).key, &mut (*self.tail.0).value) };
-        self.tail = self.tail.prev();
-        self.len -= 1;
-        Some((k, v))
-    }
-}
-
-impl<K: Ord, V> IntoIterator for RedBlackTree<K, V> {
-    type Item = (K, V);
-    type IntoIter = IntoIter<K, V>;
-
-    #[inline]
-    fn into_iter(mut self) -> IntoIter<K, V> {
-        let iter = if self.root.is_null() {
-            IntoIter {
-                head: NodePtr::null(),
-                tail: NodePtr::null(),
-                len: self.len,
-            }
-        } else {
-            IntoIter {
-                head: self.first_child(),
-                tail: self.last_child(),
-                len: self.len,
-            }
-        };
-        self.fast_clear();
-        iter
     }
 }
 
@@ -1093,17 +767,20 @@ impl<K: Ord, V> RedBlackTree<K, V> {
         let obj = Box::from_raw(node.0);
         return obj.pair();
     }
+}
 
-    /// Return the key and value iter
-    #[inline]
-    pub fn iter(&self) -> Iter<K, V> {
-        Iter {
-            head: self.first_child(),
-            tail: self.last_child(),
-            len: self.len,
-            _marker: marker::PhantomData,
-        }
-    }
+fn test_clone() {
+    let mut m = RedBlackTree::new();
+    assert_eq!(m.len(), 0);
+    m.insert(1, 2);
+    assert_eq!(m.len(), 1);
+    m.insert(2, 4);
+    assert_eq!(m.len(), 2);
+    let m2 = m.clone();
+    m.clear();
+    assert_eq!(*m2.get(&1).unwrap(), 2);
+    assert_eq!(*m2.get(&2).unwrap(), 4);
+    assert_eq!(m2.len(), 2);
 }
 
 fn main() {
