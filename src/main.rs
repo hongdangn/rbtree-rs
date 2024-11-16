@@ -30,7 +30,13 @@ where
     V: Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "(k:{:?}-v:{:?}-c:{:?})", self.key, self.value, self.color)
+        let parent_key = if self.parent.is_null() {
+            None
+        } else {
+            self.parent.get_key().map(|key| key) // This will give you Option<K>
+        };
+    
+        write!(f, "(k:{:?}-v:{:?}-c:{:?}-p:{:?})", self.key, self.value, self.color, parent_key)
     }
 }
 
@@ -116,6 +122,17 @@ impl<K: Ord, V> NodePtr<K, V> {
             temp = temp.left();
         }
         return temp;
+    }
+
+    #[inline]
+    fn get_key(&self) -> Option<&K> {
+        if self.is_null() {
+            return None;
+        }
+
+        unsafe {
+            Some(&(*self.0).key)
+        }
     }
 
     #[inline]
@@ -227,6 +244,7 @@ impl<K: Ord + Debug, V: Debug> RedBlackTree<K, V> {
         }
         println!("Tree's size: {:?}, Preorder print:", self.len());
         self.tree_print(self.root);
+        println!("\n");
     }
 }
 
@@ -568,7 +586,6 @@ impl<K: Ord, V> RedBlackTree<K, V> {
     pub fn del_node(&mut self, k: &K) -> Option<V> {
         let node = self.find_node(k);
         if node.is_null() {
-            println!("Wrong key.");
             return None;
         }
         unsafe { Some(self.delete(node).1) }
@@ -718,12 +735,11 @@ fn main() {
     let mut a = RedBlackTree::new();
     assert!(a.is_empty());
 
-    a.check_and_insert(1, 15);
-    a.check_and_insert(2, 17);
-    a.check_and_insert(3, 32);
-    a.check_and_insert(4, 22);
-    a.check_and_insert(2, 15);
-    a.check_and_insert(2, 40);
+    for i in 1..10 {
+        a.check_and_insert(i, i);
+    } 
+
+    a.print_tree_preorder();
     // a.check_and_insert()
     a.del_node(&2);
     a.del_node(&2);
